@@ -1,0 +1,4 @@
+coverage/
+.editorconfig
+.eslintignore
+.eslintrc.json
