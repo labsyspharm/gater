@@ -73,12 +73,24 @@ class ImageViewer {
             collectionMode: false,
             preload: false,
             homeFillsViewer: true,
-            visibilityRatio: 1.0,
+            visibilityRatio: 0,
         };
 
         // Instantiate viewer with the ViaWebGL Version of OSD
         this.viewer = viaWebGL.OpenSeadragon(viewer_config);
         this.addScaleBar();
+
+        // Get and shrink all button images
+        this.parent = d3.select(`#openseadragon`);
+        this.parent.selectAll('img')
+            .attr('height', 40);
+
+        // Force controls to bottom right
+        const controlsAnchor = this.parent.select('img').node().parentElement.parentElement.parentElement.parentElement;
+        controlsAnchor.style.right = 'unset';
+        controlsAnchor.style.top = 'unset';
+        controlsAnchor.style.left = '40vh';
+        controlsAnchor.style.bottom = '2vh';
 
         // Flexible use of textures
         const constantTextures = ["ids", "centers", "gatings"];

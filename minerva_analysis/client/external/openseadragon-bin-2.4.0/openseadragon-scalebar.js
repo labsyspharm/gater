@@ -317,8 +317,8 @@
                 var barWidth = this.divElt.offsetWidth;
                 var barHeight = this.divElt.offsetHeight;
                 var container = this.viewer.container;
-                var x = container.offsetWidth - barWidth;
-                var y = container.offsetHeight - barHeight;
+                var x = (4/5)*(container.offsetWidth - barWidth);
+                var y = container.offsetHeight - (17/10)*barHeight;
                 if (this.stayInsideImage) {
                     var pixel = this.viewer.viewport.pixelFromPoint(
                             new $.Point(1, 1 / this.viewer.source.aspectRatio),
