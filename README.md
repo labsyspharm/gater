@@ -8,7 +8,7 @@ It is built with a python [Flask](http://flask.pocoo.org/) backend and a [Node.j
 
 ## Executables (for Users)
 Releases can be found here:
-https://github.com/labsyspharm/minerva_analysis/releases
+https://github.com/labsyspharm/gater/releases
 These are executables for Windows and MacOS that can be run locally without any installations.
 
 
