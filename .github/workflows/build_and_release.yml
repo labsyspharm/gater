@@ -52,12 +52,13 @@ jobs:
         if: startsWith(matrix.os,'mac')
         shell: bash -l {0}
         run: |
-          ./package_mac.sh Gater_Mac_${{github.event.client_payload.version}}
+          ./package_mac.sh 
       - name: Rename Mac
         if: startsWith(matrix.os,'mac')
         shell: bash -l {0}
         run: |
           cd dist
+          mv minerva_analysis_mac Gater_Mac_${{github.event.client_payload.version}} 
           zip "Gater_Mac_${{github.event.client_payload.version}}.zip" "Gater_Mac_${{github.event.client_payload.version}}"
           rm "Gater_Mac_${{github.event.client_payload.version}}"
       - name: Release
