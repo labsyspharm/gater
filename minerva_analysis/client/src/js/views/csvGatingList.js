@@ -261,40 +261,55 @@ class CSVGatingList {
         }
 
         this.eventHandler.trigger(CSVGatingList.events.RESET_GATINGLIST)
-
-        _.each(gates, col => {
-            let shortName = this.dataLayer.getShortChannelName(col.channel);
-            let channelID = this.gatingIDs[shortName];
-            if (this.sliders.get(shortName)) {
-                let toggle_off
-                if (!col.gate_active && col.channel in this.selections) {
-                    toggle_off = true;
-                } else {
-                    toggle_off = false;
-                }
-                this.gating_channels[col.channel] = [col.gate_start, col.gate_end];
-                if (col.gate_active) {
-                    // IF the channel isn't active, make it so
-                    if (!this.selections[col.channel]) {
-                        let selector = `#csv_gating-slider_${channelID}`;
-                        document.querySelector(selector).click();
+         let list_uploaded_lassos = [];
+        _.each(gates, async (col) => {
+            if (col.channel == 'Lasso') {
+                list_uploaded_lassos.push(col);
+            } else {
+                let shortName = this.dataLayer.getShortChannelName(col.channel);
+                let channelID = this.gatingIDs[shortName];
+                if (this.sliders.get(shortName)) {
+                    let toggle_off
+                    if (!col.gate_active && col.channel in this.selections) {
+                        toggle_off = true;
+                    } else {
+                        toggle_off = false;
                     }
-                    this.selections[col.channel] = [col.gate_start, col.gate_end];
+                    this.gating_channels[col.channel] = [col.gate_start, col.gate_end];
+                    if (col.gate_active) {
+                        // IF the channel isn't active, make it so
+                        if (!this.selections[col.channel]) {
+                            let selector = `#csv_gating-slider_${channelID}`;
+                            document.querySelector(selector).click();
+                        }
+                        this.selections[col.channel] = [col.gate_start, col.gate_end];
 
-                    // For records
+                        // For records
 
-                } else {
-                    // If channel is currently active, but shouldn't be, update it
-                    if (toggle_off) {
-                        let selector = `#csv_gating-slider_${channelID}`;
-                        document.querySelector(selector).click();
+                    } else {
+                        // If channel is currently active, but shouldn't be, update it
+                        if (toggle_off) {
+                            let selector = `#csv_gating-slider_${channelID}`;
+                            document.querySelector(selector).click();
+                        }
+                        delete this.selections[col.channel];
                     }
-                    delete this.selections[col.channel];
                 }
             }
         })
         // Trigger brush
         this.eventHandler.trigger(CSVGatingList.events.GATING_BRUSH_END, this.selections);
+
+        await this.seaDragonViewer.clear_lassos();
+        if (source === 'file'){
+            list_uploaded_lassos = list_uploaded_lassos.map(item => {
+                item['gate_start'] = JSON.parse(item['gate_start'].replace(/'/g, '"'));
+                return item;
+            });
+        }
+        for (let lasso of list_uploaded_lassos){
+            await this.seaDragonViewer.upload_lasso(lasso);
+        }
     }
 
     /**
@@ -302,15 +317,18 @@ class CSVGatingList {
      * @param name - the name of the channel to apply it to
      */
     async autoGate(shortName) {
-        const transformed = this.dataLayer.isTransformed();
-        const input = (await this.getGatingGMM(shortName)).gate.toFixed(7);
-        const gate = transformed ? parseFloat(input) : parseInt(input);
         const fullName = this.dataLayer.getFullChannelName(shortName);
+        const input = this.hasGatingGMM[shortName]['gate'].toFixed(7);
+        const transformed = this.dataLayer.isTransformed();
+        const gate = transformed ? parseFloat(input) : parseInt(input);
         if (fullName in this.selections) {
+            const channelID = this.gatingIDs[shortName];
             const gate_end = this.selections[fullName][1];
             const slider = this.sliders.get(shortName);
             const values = [gate, gate_end];
             this.moveSliderHandles(slider, values, shortName, 'GATING_BRUSH_END');
+            d3.select('#gating_slider-input_' + channelID + '_0').attr('value', gate)
+            d3.select('#gating_slider-input_' + channelID + '_0').property('value', gate);
         }
     }
 
@@ -421,7 +439,7 @@ class CSVGatingList {
         // Events ::
 
         gating_download_icon_db.addEventListener('click', () => {
-            this.dataLayer.saveGatingList(this.gating_channels, this.selections, false);
+            this.dataLayer.saveGatingList(this.gating_channels, this.selections, this.seaDragonViewer.list_lassos);
             alert("Saved Gating to Database");
         })
 
@@ -447,12 +465,12 @@ class CSVGatingList {
 
         // Download gated channel ranges
         download_gated_channel_ranges.addEventListener('click', () => {
-            this.dataLayer.downloadGatingCSV(this.gating_channels, this.selections, false);
+            this.dataLayer.downloadGatingCSV(this.gating_channels, this.selections, this.seaDragonViewer.list_lassos,false);
         })
 
         // Download gated channel ranges
         download_gated_cell_encodings.addEventListener('click', () => {
-            this.dataLayer.downloadGatingCSV(this.gating_channels, this.selections, true);
+            this.dataLayer.downloadGatingCSV(this.gating_channels, this.selections, this.seaDragonViewer.list_lassos, this.seaDragonViewer.selection_ids, true);
         })
 
         // Toggle outlined / filled cell selections
@@ -531,7 +549,7 @@ class CSVGatingList {
         if (!data) return;
 
         const fullName = this.dataLayer.getFullChannelName(name);
-        const { xDomain, yDomain, histogramData} = this.histogramData(fullName); 
+        const { xDomain, yDomain, histogramData } = this.histogramData(fullName);
         let channelID = this.gatingIDs[name];
 
         let data_min
@@ -574,10 +592,10 @@ class CSVGatingList {
                 const transformed = this.dataLayer.isTransformed();
                 const v0 = transformed ? range[0] : Math.round(range[0]);
                 const v1 = transformed ? range[1] : Math.round(range[1]);
-                d3.select('#gating_slider-input' + channelID + 0).attr('value', v0)
-                d3.select('#gating_slider-input' + channelID + 0).property('value', v0);
-                d3.select('#gating_slider-input' + channelID + 1).attr('value', v1);
-                d3.select('#gating_slider-input' + channelID + 1).property('value', v1);
+                d3.select('#gating_slider-input_' + channelID + '_0').attr('value', v0)
+                d3.select('#gating_slider-input_' + channelID + '_0').property('value', v0);
+                d3.select('#gating_slider-input_' + channelID + '_1').attr('value', v1);
+                d3.select('#gating_slider-input_' + channelID + '_1').property('value', v1);
                 this.moveSliderHandles(sliderSimple, [v0, v1], name, "GATING_BRUSH_MOVE");
             });
 
@@ -638,7 +656,7 @@ class CSVGatingList {
             .style('background', 'none')
             .append('input')
             .attr( 'y', -17)
-            .attr('id', 'gating_slider-input' + channelID + i)
+            .attr('id', 'gating_slider-input_' + channelID + '_' + i)
             .attr('type', 'text')
             .attr('class', 'input')
             .attr('value', () => {
@@ -674,29 +692,17 @@ class CSVGatingList {
         };
     }
 
-    async getGatingGMM(name) {
-        let packet = this.hasGatingGMM[name];
-        if (!(name in this.hasGatingGMM)) {
-            const fullName = this.dataLayer.getFullChannelName(name);
-            packet = await this.dataLayer.getGatingGMM(fullName);
-            this.hasGatingGMM[name] = packet;
-        }
-        const channelID = this.gatingIDs[name];
-        const autoBtn = document.getElementById(`auto-btn-gating_${channelID}`);
-        autoBtn.classList.remove("auto-loading")
-        return packet;
-    }
-
-    async getAndDrawGatingGMM(name) {
+    async getGatingGMM(name, selection_ids = []) {
         const fullName = this.dataLayer.getFullChannelName(name);
-        await this.getGatingGMM(name);
-        this.drawGatingGMM(name);
+        let packet = await this.dataLayer.getGatingGMM(fullName, selection_ids);
+        this.hasGatingGMM[name] = packet;
+        return packet;
     }
 
     drawGatingGMM(name) {
         let channelID = this.gatingIDs[name];
         const fullName = this.dataLayer.getFullChannelName(name);
-        const { xDomain, yDomain } = this.histogramData(fullName); 
+        const { xDomain, yDomain } = this.histogramData(fullName);
         const packet = this.hasGatingGMM[name];
         let gmm1Data = packet['gmm_1'];
         let gmm2Data = packet['gmm_2'];
@@ -726,6 +732,7 @@ class CSVGatingList {
             .attr('d', line)
             .attr('class', 'gmm_line')
             .attr('class', 'gmm_line_'+name)
+            .attr('id', 'gmm1_line_'+name)
             .attr('transform', 'translate(0,-31)')
             .attr('fill', 'none')
             .attr('stroke', 'blue')
@@ -737,9 +744,57 @@ class CSVGatingList {
             .attr('d', line)
             .attr('class', 'gmm_line')
             .attr('class', 'gmm_line_'+name)
+            .attr('id', 'gmm2_line_'+name)
             .attr('transform', 'translate(0,-31)')
             .attr('fill', 'none')
             .attr('stroke', 'red')
+    }
+
+    async getAndDrawGatingGMM(name) {
+        await this.getGatingGMM(name);
+
+        const channelID = this.gatingIDs[name];
+        const autoBtn = document.getElementById(`auto-btn-gating_${channelID}`);
+        autoBtn.classList.remove("auto-loading")
+
+        this.drawGatingGMM(name);
+    }
+
+    async updateGMM(selection_ids) {
+        for (let name in this.hasGatingGMM) {
+            await this.getGatingGMM(name, selection_ids=selection_ids);
+
+            const fullName = this.dataLayer.getFullChannelName(name);
+            const { xDomain, yDomain } = this.histogramData(fullName);
+            const packet = this.hasGatingGMM[name];
+            let gmm1Data = packet['gmm_1'];
+            let gmm2Data = packet['gmm_2'];
+            const gmm1_yMax = Math.max(...gmm1Data.map(obj => obj.y));
+            const gmm2_yMax = Math.max(...gmm2Data.map(obj => obj.y));
+            const yMax = Math.max(gmm1_yMax, gmm2_yMax);
+            const gmm_yDomain = [yMax, 0]
+
+            const gatingListEl = document.getElementById("csv_gating_list");
+            const swidth = gatingListEl.getBoundingClientRect().width;
+
+            let xScale = d3.scaleLinear()
+                .domain(xDomain)
+                .range([0, swidth - 73])
+
+            let yScale = d3.scaleLinear()
+                .domain(gmm_yDomain)
+                .range([0, 25])
+
+            let line = d3.line()
+                .x(d => xScale(d.x))
+                .y(d => yScale(d.y))
+                .curve(d3.curveMonotoneX)
+
+            let channel_gmm1 = d3.select('#gmm1_line_'+name)
+            let channel_gmm2 = d3.select('#gmm2_line_'+name)
+            channel_gmm1.data([gmm1Data]).transition().duration(1000).attr('d', line)
+            channel_gmm2.data([gmm2Data]).transition().duration(1000).attr('d', line)
+        }
     }
 
     /**
