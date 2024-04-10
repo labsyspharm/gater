@@ -232,24 +232,6 @@ def upload_file_page():
                     channelFile = channelFile.replace('"', '') # remove " characters
                     channelFile = Path(channelFile)
 
-
-                    # # get label file from user specified path
-                    # labelName = request.form['masks']
-                    # labelFolder = str(PurePath('unmicst-' + mcmicroDirName, labelName + '.ome.tif'))
-                    # labelFile = PurePath(directory, 'segmentation', labelFolder)
-
-                    # # also check for older seg file format (.tif)
-                    # if not Path(directory, 'segmentation', labelFolder).is_file():
-                    #     labelFolder = str(PurePath('unmicst-' + mcmicroDirName, labelName + '.tif'))
-                    #     labelFile = PurePath(directory, 'segmentation', labelFolder)
-
-                    # # get csv file from user specified path
-                    # csvName = mcmicroDirName + '--unmicst_' + labelName + '.csv' # could use labelName to have dynamic csv but usually only cell available.
-                    # csvPath = str(PurePath(directory, 'quantification', csvName))
-
-                    # # get channel file from user specified path
-                    # channelFile = PurePath(directory, 'registration', mcmicroDirName + '.ome.tif')
-
                 # Creates file path using name input; should change this so that it just takes directory name?
                 file_path = str(PurePath(Path.cwd(), data_path, datasetName))
                 if not Path(file_path).exists(): # If no directory for existing name for dataset input will create one
@@ -592,21 +574,6 @@ def check_mc_csv_file_existence():
             directory = Path(post_data['path'])
             pathsSplit = PurePath(directory).parts
             mcmicroDirName = pathsSplit[len(pathsSplit) - 1]
-
-            # check if csv file exists
-            # csvName = 'nmicst-' + mcmicroDirName + '_' + mask + '.csv'
-            # csvName = mcmicroDirName + '--unmicst_' + mask + '.csv'
-            # csvPath = Path(directory, 'quantification', csvName)
-
-            # if csvPath.is_file():
-            #     return serialize_and_submit_json(True)
-
-            # # Get suffix of file path
-            # file_extension = directory.suffix
-
-            # # Check if file extension is ".csv"
-            # if file_extension.lower() == '.csv':
-            #     return serialize_and_submit_json(True)
         
             path = Path(post_data['mask'])
             if path.suffix.lower() == '.csv':
@@ -619,19 +586,6 @@ def check_mc_channel_file_existence():
     # path and type information from upload
     post_data = json.loads(request.data)
     if 'path' in post_data:
-            # #get path and last bit which defines the dirname
-            # directory = Path(post_data['path'])
-            # try:
-            #     pathsSplit = PurePath(directory).parts
-            #     mcmicroDirName = pathsSplit[len(pathsSplit) - 1]
-
-            #     # check if channel file exists
-            #     channelFile = Path(directory, 'registration', mcmicroDirName + '.ome.tif') or Path(directory, 'registration', mcmicroDirName + '.ome.tiff')
-
-            #     if channelFile.is_file():
-            #         return serialize_and_submit_json(True)
-            # except Exception as e:
-            #     return serialize_and_submit_json(False)
 
         if 'image' in post_data:
             path = Path(post_data['image'])
