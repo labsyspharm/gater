@@ -336,9 +336,7 @@ async function fillSegFileList() {
 
     //remove old selection options as soon as path changes
     var select_field = document.getElementById("mcmicro_seg");
-    while (select_field.length > 0) {
-        select_field.remove(0);
-    }
+    select_field.innerHTML = "";
 
     try {
         //get available segmentation masks in mcmicro directory from server
