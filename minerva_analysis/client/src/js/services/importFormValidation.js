@@ -98,6 +98,9 @@ async function checkChannelExistence(caller) {
     let pathInputField = d3.select('#'+ caller.id);
     let path = pathInputField.property("value");
 
+    let imageSelectionField = d3.select('#'+ caller.id);
+    let image = imageSelectionField.property("value");
+
     try {
         //check if corresponsindg csv file exists
         let response = await fetch('/check_mc_channel_file_existence', {
@@ -109,6 +112,7 @@ async function checkChannelExistence(caller) {
             body: JSON.stringify(
                 {
                     path: path,
+                    image : image
                 }
             )
         });
@@ -239,7 +243,7 @@ try {
 }
 
 //get a list of available files in a folder (mcmicro naming specific)
-async function fillSegFileList() {
+async function fillCSVFileList() {
     const self = this;
 
     //get segmentation folder path from the input text field
@@ -247,6 +251,50 @@ async function fillSegFileList() {
 
     //remove old selection options as soon as path changes
     var select_field = document.getElementById("mcmicro_masks");
+    while (select_field.length > 0) {
+      select_field.remove(0);
+    }
+
+    try {
+        //get available segmentation masks in mcmicro directory from server
+        let response = await fetch('/get_mc_csv_file_list', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(
+                {
+                    path: path,
+                }
+            )
+        });
+        let response_data = await response.json();
+
+        //fill select form field with new options
+        response_data.forEach(function(option_value){
+            var option = document.createElement("option");
+            option.text = option_value;
+            option.value = option_value;
+            select_field.add(option);
+        })
+        
+        //return the filled field
+        return response_data;
+    } catch (e) {
+        console.log("Error Getting Segmentation File List", e);
+    }
+}
+
+//get a list of available files in a folder (mcmicro naming specific)
+async function fillImgFileList() {
+    const self = this;
+
+    //get segmentation folder path from the input text field
+    let path = d3.select('#mcmicro_output_folder').property("value");
+
+    //remove old selection options as soon as path changes
+    var select_field = document.getElementById("mcmicro_images");
     while (select_field.length > 0) {
       select_field.remove(0);
     }
@@ -274,13 +322,58 @@ async function fillSegFileList() {
             option.value = option_value;
             select_field.add(option);
         })
+        
+        //return the filled field
+        return response_data;
+    } catch (e) {
+        console.log("Error Getting Channel File List", e);
+    }
+}
 
+//get a list of available files in a folder (mcmicro naming specific)
+async function fillSegFileList() {
+    const self = this;
+
+    //get segmentation folder path from the input text field
+    let path = d3.select('#mcmicro_output_folder').property("value");
+
+    //remove old selection options as soon as path changes
+    var select_field = document.getElementById("mcmicro_seg");
+    while (select_field.length > 0) {
+      select_field.remove(0);
+    }
+
+    try {
+        //get available segmentation masks in mcmicro directory from server
+        let response = await fetch('/get_mc_segmentation_file_list', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(
+                {
+                    path: path,
+                }
+            )
+        });
+        let response_data = await response.json();
+
+        //fill select form field with new options
+        response_data.forEach(function(option_value){
+            var option = document.createElement("option");
+            option.text = option_value;
+            option.value = option_value;
+            select_field.add(option);
+        })
+        
         //return the filled field
         return response_data;
     } catch (e) {
         console.log("Error Getting Segmentation File List", e);
     }
 }
+
 
 let uploadPercentage = 0;
 let ajaxForm = $('form').ajaxForm({
