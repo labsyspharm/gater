@@ -250,8 +250,7 @@ async function fillCSVFileList() {
     let path = d3.select('#mcmicro_output_folder').property("value");
 
     //remove old selection options as soon as path changes
-    var select_field = document.getElementById("mcmicro_masks");
-    select_field.innerHTML = "";
+
 
     try {
         //get available segmentation masks in mcmicro directory from server
@@ -268,7 +267,8 @@ async function fillCSVFileList() {
             )
         });
         let response_data = await response.json();
-
+        var select_field = document.getElementById("mcmicro_masks");
+        select_field.innerHTML = "";
         //fill select form field with new options
         response_data.forEach(function (option_value) {
             var option = document.createElement("option");
@@ -292,9 +292,7 @@ async function fillImgFileList() {
     let path = d3.select('#mcmicro_output_folder').property("value");
 
 
-    //remove old selection options as soon as path changes
-    var select_field = document.getElementById("mcmicro_images");
-    select_field.innerHTML = "";
+
 
     try {
         //get available segmentation masks in mcmicro directory from server
@@ -311,7 +309,9 @@ async function fillImgFileList() {
             )
         });
         let response_data = await response.json();
-
+        //remove old selection options as soon as path changes
+        var select_field = document.getElementById("mcmicro_images");
+        select_field.innerHTML = "";
         //fill select form field with new options
         response_data.forEach(function (option_value) {
             var option = document.createElement("option");
@@ -335,8 +335,7 @@ async function fillSegFileList() {
     let path = d3.select('#mcmicro_output_folder').property("value");
 
     //remove old selection options as soon as path changes
-    var select_field = document.getElementById("mcmicro_seg");
-    select_field.innerHTML = "";
+
 
     try {
         //get available segmentation masks in mcmicro directory from server
@@ -353,7 +352,8 @@ async function fillSegFileList() {
             )
         });
         let response_data = await response.json();
-
+        var select_field = document.getElementById("mcmicro_seg");
+        select_field.innerHTML = "";
         //fill select form field with new options
         response_data.forEach(function (option_value) {
             var option = document.createElement("option");
