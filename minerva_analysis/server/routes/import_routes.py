@@ -1,5 +1,7 @@
 # CRUD for Datasources
 
+# import sys
+# sys.path.append('/c/Users/Sophie/minerva_analysis/')
 from minerva_analysis import app, get_config_names, config_json_path, data_path, cwd_path
 from minerva_analysis.server.utils import mostFrequentLongestSubstring, pre_normalization
 from minerva_analysis.server.models import data_model
@@ -18,6 +20,7 @@ import orjson
 import os
 from os import walk
 import io
+
 
 total_tasks = 100
 completed_task = 0
@@ -211,26 +214,27 @@ def upload_file_page():
                     if request.form.get('mcmicro_name') != '':
                         datasetName = request.form['mcmicro_name']
 
-                    # get label file from user specified path
-                    labelName = request.form['masks']
-                    labelFolder = str(PurePath('unmicst-' + mcmicroDirName, labelName + '.ome.tif'))
-                    labelFile = PurePath(directory, 'segmentation', labelFolder)
+                    #label file
+                    labelFile = request.form.get('segs')
+                    labelFile = labelFile.replace('"', '') # remove " characters
+                    labelFile = Path(labelFile)
+                    labelName = os.path.splitext(labelFile.name)[0]
 
-                    # also check for older seg file format (.tif)
-                    if not Path(directory, 'segmentation', labelFolder).is_file():
-                        labelFolder = str(PurePath('unmicst-' + mcmicroDirName, labelName + '.tif'))
-                        labelFile = PurePath(directory, 'segmentation', labelFolder)
+                    #csv file
+                    csvPath = request.form.get('masks');
+                    csvPath = csvPath.replace('"', '') # remove " characters
+                    csvPath = Path(csvPath)
+                    pathsSplit = PurePath(csvPath).parts
+                    csvName = pathsSplit[len(pathsSplit) - 1]
 
-                    # get csv file from user specified path
-                    csvName = mcmicroDirName + '--unmicst_' + labelName + '.csv' # could use labelName to have dynamic csv but usually only cell available.
-                    csvPath = str(PurePath(directory, 'quantification', csvName))
+                    #channel file
+                    channelFile = request.form.get('images')
+                    channelFile = channelFile.replace('"', '') # remove " characters
+                    channelFile = Path(channelFile)
 
-                    # get channel file from user specified path
-                    channelFile = PurePath(directory, 'registration', mcmicroDirName + '.ome.tif')
-
-                #further processing
+                # Creates file path using name input; should change this so that it just takes directory name?
                 file_path = str(PurePath(Path.cwd(), data_path, datasetName))
-                if not Path(file_path).exists():
+                if not Path(file_path).exists(): # If no directory for existing name for dataset input will create one
                     Path(file_path).mkdir()
                 total_tasks = 2
 
@@ -510,20 +514,53 @@ def list_tif_files_in_dir():
     #path and type information from upload
     post_data = json.loads(request.data)
     if 'path' in post_data:
-        path = Path(post_data['path'], "segmentation");
+        # path = Path(post_data['path'], "segmentation");
+        path = Path(post_data['path'])
 
         #for segmentation, mcmicro specifics
-        mask_types = ["cell", "cellRing", "cyto", "cytoRing", "nuclei", "nucleiRing"]
+        # mask_types = ["cell", "cellRing", "cyto", "cytoRing", "nuclei", "nucleiRing"]
 
         if path.is_dir():
             for (dirpath, dirnames, filenames) in walk(path):
                 for (file) in filenames:
-                    file = file.split('.')
-                    if file[0] in mask_types:
-                        files.append(file[0])
+                    file_split = file.split('.')
+                    # if file[0] in mask_types:
+                    #     files.append(file[0])
+                    if (file_split[-1] == 'tif' and file_split[-2] == 'ome') or (file_split[-1] == 'tiff' and file_split[-2] == 'ome'):
+                        file_path = os.path.join(dirpath, file)
+                        files.append(file_path)
             print(files)
     else:
         print('error in segmentation path');
+    return serialize_and_submit_json(files)
+
+@app.route('/get_mc_csv_file_list', methods=['POST'])
+def list_csv_files_in_dir():
+    # return all seg files found in the seg subfolder (mc micro specific)
+    files = []
+    files.append('')
+
+    #path and type information from upload
+    post_data = json.loads(request.data)
+    if 'path' in post_data:
+        # path = Path(post_data['path'], "segmentation");
+        path = Path(post_data['path'])
+
+        #for segmentation, mcmicro specifics
+        # mask_types = ["cell", "cellRing", "cyto", "cytoRing", "nuclei", "nucleiRing"]
+
+        if path.is_dir():
+            for (dirpath, dirnames, filenames) in walk(path):
+                for (file) in filenames:
+                    file_split = file.split('.')
+                    # if file[0] in mask_types:
+                    #     files.append(file[0])
+                    if file_split[-1] == 'csv':
+                        file_path = os.path.join(dirpath, file)
+                        files.append(file_path)
+            print(files)
+    else:
+        print('error in csv path');
     return serialize_and_submit_json(files)
 
 @app.route('/check_mc_csv_file_existence', methods=['POST'])
@@ -537,14 +574,11 @@ def check_mc_csv_file_existence():
             directory = Path(post_data['path'])
             pathsSplit = PurePath(directory).parts
             mcmicroDirName = pathsSplit[len(pathsSplit) - 1]
-
-            # check if csv file exists
-            # csvName = 'nmicst-' + mcmicroDirName + '_' + mask + '.csv'
-            csvName = mcmicroDirName + '--unmicst_' + mask + '.csv'
-            csvPath = Path(directory, 'quantification', csvName)
-
-            if csvPath.is_file():
+        
+            path = Path(post_data['mask'])
+            if path.suffix.lower() == '.csv':
                 return serialize_and_submit_json(True)
+
     return serialize_and_submit_json(False)
 
 @app.route('/check_mc_channel_file_existence', methods=['POST'])
@@ -552,19 +586,12 @@ def check_mc_channel_file_existence():
     # path and type information from upload
     post_data = json.loads(request.data)
     if 'path' in post_data:
-            #get path and last bit which defines the dirname
-            directory = Path(post_data['path'])
-            try:
-                pathsSplit = PurePath(directory).parts
-                mcmicroDirName = pathsSplit[len(pathsSplit) - 1]
 
-                # check if channel file exists
-                channelFile = Path(directory, 'registration', mcmicroDirName + '.ome.tif')
+        if 'image' in post_data:
+            path = Path(post_data['image'])
+            if path.suffix.lower() == '.tif' or '.tiff':
+                return serialize_and_submit_json(True)
 
-                if channelFile.is_file():
-                    return serialize_and_submit_json(True)
-            except Exception as e:
-                return serialize_and_submit_json(False)
     return serialize_and_submit_json(False)
 
 @app.route('/check_file_existence', methods=['POST'])

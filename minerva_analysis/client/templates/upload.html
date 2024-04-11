@@ -31,7 +31,7 @@
                     <div id="custom_import" style="display: inline;">
                         <div class="row">
                             <div class="col-3">
-                                <label for="channel_file">Channel File Path:</label>
+                                <label for="channel_file">Image File Path:</label>
                             </div>
                             <div class="col-9">
                                 <input type="text" id="channel_file" class="form-control" name="channel_file" onkeyup="checkFileExistence(this)" required>
@@ -57,7 +57,7 @@
                         </div>
                         <div class="row">
                             <div class="col-3">
-                                <label for="csv_file">CSV File Path:</label>
+                                <label for="csv_file">Quantification File CSV:</label>
                             </div>
                             <div class="col-9">
 {#                                <input type="file" id="csv_file" name="csv_file" required>#}
@@ -96,7 +96,7 @@
                                 <label for="name" class="form-label">Path:</label>
                             </div>
                             <div class="col-9">
-                                <input type="text" class="form-control" id="mcmicro_output_folder" name="mcmicro_output_folder" required onkeyup="fillSegFileList(); checkMCOutputFolder(this)">
+                                <input type="text" class="form-control" id="mcmicro_output_folder" name="mcmicro_output_folder" required onkeyup="fillCSVFileList(); fillImgFileList(); fillSegFileList(); checkMCOutputFolder(this)">
                                 <div class="valid-feedback">Valid.</div>
                                 <div class="invalid-feedback" id="mcmicro_path_validation_text">
                                   Please provide a valid path.
@@ -106,7 +106,7 @@
                         </div>
                         <div class="row">
                             <div class="col-3">
-                                <label for="mcmicro_masks">Choose a mask:</label>
+                                <label for="mcmicro_masks">Choose a quantification file:</label>
                             </div>
                             <div class="col-auto">
                               <select id="mcmicro_masks" class="form-control" name="masks" required onchange="checkCSVFileExistence(this);">
@@ -114,6 +114,32 @@
                                 <div class="valid-feedback">Valid.</div>
                                 <div class="invalid-feedback" id="mcmicro_mask_validation_text">
                                     No mask files found under this path.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-3">
+                                <label for="mcmicro_images">Choose an image file:</label>
+                            </div>
+                            <div class="col-auto">
+                              <select id="mcmicro_images" class="form-control" name="images" required onchange="checkChannelExistence(this);">
+                              </select>
+                                <div class="valid-feedback">Valid.</div>
+                                <div class="invalid-feedback" id="mcmicro_mask_validation_text">
+                                    No image files found under this path.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-3">
+                                <label for="mcmicro_seg">Choose a segmentation file:</label>
+                            </div>
+                            <div class="col-auto">
+                              <select id="mcmicro_seg" class="form-control" name="segs" required onchange="checkChannelExistence(this);">
+                              </select>
+                                <div class="valid-feedback">Valid.</div>
+                                <div class="invalid-feedback" id="mcmicro_mask_validation_text">
+                                    No image files found under this path.
                                 </div>
                             </div>
                         </div>
