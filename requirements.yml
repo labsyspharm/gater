@@ -26,9 +26,9 @@ dependencies:
   - zarr=2.10
 
   - pip:
-      - opencv-python==4.7.0.68
-      - imagecodecs[all]==2021.4.28
+      - opencv-python==4.9.0.80
       - xmlschema
       - ome-types==0.3.3
       - pydantic==1.10.10
+      - imagecodecs[all]
 
