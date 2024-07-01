@@ -27,7 +27,8 @@ To import your imaging files in the import gui type in the mounted `/data/..`
 
 ## Clone and Run Codebase (for Developers)
 #### 1. Checkout Project
-`git clone https://github.com/labsyspharm/minerva_analysis.git`
+* `git clone https://github.com/labsyspharm/minerva_analysis.git`
+* `cd minerva_analysis`
 #### 2. Checkout Necessary Branch
 * **For Gating, run** `git checkout gating`
 * Run `git pull` to make sure everything is up to date 
