@@ -3,7 +3,7 @@
 ![](./minerva_analysis/client/src/img/logo_with_text.svg)
 
 ## About
-This is  an [openseadragon](https://openseadragon.github.io/) based **Cellular Image Viewing and Analysis Tool**. 
+This is an [openseadragon](https://openseadragon.github.io/) based **Cellular Image Viewing and Analysis Tool**. 
 It is built with a python [Flask](http://flask.pocoo.org/) backend and a [Node.js](https://nodejs.org/en/) javascript frontend.
 
 ## Executables (for Users)
@@ -41,14 +41,12 @@ To import your imaging files in the import gui type in the mounted `/data/..`
 * Create env:  `conda env create -f requirements.yml`
 
 ##### Activate Environment
-* Active environment: `conda activate minerva_analysis`
+* Activate environment: `conda activate minerva_analysis`
 
 
 ##### Start the Server
 
 * `python run.py` - Runs the webserver
-##### Start the Server
-
 * Access the tool via `http://localhost:8000/`
 
 
